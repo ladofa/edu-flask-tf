@@ -5,6 +5,7 @@ import json
 import os
 import argparse
 import datetime
+import coco_labels
 
 import tflite_detector
 
@@ -50,14 +51,20 @@ def detection():
 
     rects, classes, scores = tflite_detector.inference(image)
 
+    labels = []
+    for cat in classes:
+        label_txt = coco_labels.labels[int(cat)]
+        labels.append(label_txt)
+
     #write json
     json_path = os.path.join('outputs', filename_first + '.json')
-    result = {'rects':rects.tolist(), 'classes':classes.tolist(), 'scores':scores.tolist()}
+    result = {'rects':rects.tolist(), 'labels':labels, 'scores':scores.tolist()}
     json.dump(result, open(json_path, 'w'))
     
     #write image
     #drawing...
-    dst = image.copy()
+    dst = image
+    tflite_detector.draw_boxes(dst, rects, classes, scores)
     dst_path = os.path.join('outputs', filename_first + '.jpg')
     cv2.imwrite(dst_path, dst)
     
@@ -76,7 +83,7 @@ def show_detection(filename_first):
     dst_path = os.path.join('..', 'outputs', filename_first + '.jpg')
 
     result = json.load(open(json_path, 'r'))
-    message = '%d' % np.argmax(result['scores'])
+    message = str(result['labels'])+'<br>'+str(result['scores'])
     return render_template("result.html", image_path=dst_path, message=message)
     # return send_from_directory(app.config['UPLOAD_FOLDER'],filename)
 
@@ -88,6 +95,7 @@ def infer():
     img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
     rects, classes, scores = tflite_detector.inference(img)
+
     result = {'rects':rects.tolist(), 'classes':classes.tolist(), 'scores':scores.tolist()}
     response = json.dumps(result)
 

@@ -26,4 +26,16 @@ def inference(image):
     classes = interpreter.get_tensor(output_details[1]['index'])[0]
     scores = interpreter.get_tensor(output_details[2]['index'])[0]
 
+def draw_boxes(image, rects, classes, scores):
+    width = image.shape[1]
+    height = image.shape[0]
+
+    for box, cat, score in zip(rects, classes, scores):
+        if score < 0.2:
+            continue
+        scaled_box = np.int32([height, width, height, width] * box)
+        p1, p2 = scaled_box[np.array([[1, 0],[3, 2]])]
+        p1, p2 = tuple(p1), tuple(p2)
+        cv2.rectangle(image, p1, p2, (255, 0, 0), 2)
+
     return rects, classes, scores

@@ -17,6 +17,7 @@ def inference(image):
     input_image = cv2.resize(image, (input_width, input_height))
     input_image = np.float32(input_image[None, ...])
     # input_image = input_image /127.5 - 1
+    input_image = input_image[..., [2, 1, 0]]
     
     interpreter.set_tensor(input_details[0]['index'], input_image)
 
@@ -25,6 +26,8 @@ def inference(image):
     rects = interpreter.get_tensor(output_details[0]['index'])[0]
     classes = interpreter.get_tensor(output_details[1]['index'])[0]
     scores = interpreter.get_tensor(output_details[2]['index'])[0]
+
+    return rects, classes, scores
 
 def draw_boxes(image, rects, classes, scores):
     width = image.shape[1]
